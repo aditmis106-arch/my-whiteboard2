@@ -162,7 +162,9 @@ const Sidebar = () => {
           Share
         </button>
         {error && <p className="error-message">{error}</p>}
+        }
         {success && <p className="success-message">{success}</p>}
+        }
     </div>
       {isUserLoggedIn ? (
         <button className="auth-button logout-button" onClick={handleLogout}>
