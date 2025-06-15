@@ -11,21 +11,6 @@ import Register from "./components/Register";
 import LandingPage from "./components/LandingPage";
 import { useParams } from "react-router-dom";
 
-
-function HomePage() {
-  const { id } = useParams(); // Get the dynamic id
-  return (
-    <ToolboxProvider>
-      <div className="app-container">
-        <Toolbar />
-        <Board id={id}/>
-        <Toolbox />
-        <Sidebar /> 
-      </div>
-    </ToolboxProvider>
-  );
-}
-
 function WhiteboardApp() {
   const { id } = useParams();
   return (
@@ -49,7 +34,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/whiteboard" element={<WhiteboardApp />} />
-          <Route path="/whiteboard/:id" element={<WhiteboardApp />} /> 
+          <Route path="/whiteboard/:id" element={<WhiteboardApp />} />
         </Routes>
       </Router>
     </BoardProvider>

@@ -17,7 +17,7 @@ const LandingPage = () => {
 
   const handleGetStarted = () => {
     if (isLoggedIn) {
-      navigate('/');
+      navigate('/whiteboard');
     } else {
       navigate('/register');
     }
