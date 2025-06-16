@@ -5,11 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import boardContext from '../../store/board-context';
 import { useParams } from 'react-router-dom';
 
-
 const Sidebar = () => {
   const [canvases, setCanvases] = useState([]);
   const token = localStorage.getItem('whiteboard_user_token');
-  const { canvasId, setCanvasId,setElements,setHistory, isUserLoggedIn, setUserLoginStatus} = useContext(boardContext);
+  const { canvasId, setCanvasId, setElements, setHistory, isUserLoggedIn, setUserLoginStatus } = useContext(boardContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -22,8 +21,6 @@ const Sidebar = () => {
       fetchCanvases();
     }
   }, [isUserLoggedIn]);
-
-  useEffect(() => {}, []);
 
   const fetchCanvases = async () => {
     try {
@@ -71,15 +68,20 @@ const Sidebar = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchCanvases();
-      setCanvasId(canvases[0]._id);
-      handleCanvasClick(canvases[0]._id);
+      if (canvases.length > 1) {
+        const remainingCanvas = canvases.find(canvas => canvas._id !== id);
+        if (remainingCanvas) {
+          setCanvasId(remainingCanvas._id);
+          handleCanvasClick(remainingCanvas._id);
+        }
+      }
     } catch (error) {
       console.error('Error deleting canvas:', error);
     }
   };
 
   const handleCanvasClick = async (id) => {
-    navigate(`/${id}`);
+    navigate(`/whiteboard/${id}`);
   };
 
   const handleLogout = () => {
@@ -112,6 +114,7 @@ const Sidebar = () => {
       );
 
       setSuccess(response.data.message);
+      setEmail(""); // Clear email input
       setTimeout(() => {
         setSuccess("");
       }, 5000);
@@ -123,8 +126,18 @@ const Sidebar = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="sidebar">
+      <div className="sidebar-header">
+        <button className="back-home-btn" onClick={handleBackToHome}>
+          ← Home
+        </button>
+      </div>
+      
       <button 
         className="create-button" 
         onClick={handleCreateCanvas} 
@@ -132,6 +145,7 @@ const Sidebar = () => {
       >
         + Create New Canvas
       </button>
+      
       <ul className="canvas-list">
         {canvases.map(canvas => (
           <li 
@@ -142,28 +156,31 @@ const Sidebar = () => {
               className="canvas-name" 
               onClick={() => handleCanvasClick(canvas._id)}
             >
-              {canvas._id}
+              Canvas {canvas._id.slice(-6)}
             </span>
             <button className="delete-button" onClick={() => handleDeleteCanvas(canvas._id)}>
-              del
+              ×
             </button>
           </li>
         ))}
       </ul>
       
-      <div className="share-container">
-        <input
-          type="email"
-          placeholder="Enter the email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button className="share-button" onClick={handleShare} disabled={!isUserLoggedIn}>
-          Share
-        </button>
-        {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
-    </div>
+      {isUserLoggedIn && (
+        <div className="share-container">
+          <input
+            type="email"
+            placeholder="Enter email to share"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <button className="share-button" onClick={handleShare}>
+            Share
+          </button>
+          {error && <p className="error-message">{error}</p>}
+          {success && <p className="success-message">{success}</p>}
+        </div>
+      )}
+      
       {isUserLoggedIn ? (
         <button className="auth-button logout-button" onClick={handleLogout}>
           Logout

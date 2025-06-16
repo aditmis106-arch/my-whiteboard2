@@ -8,10 +8,10 @@ import BoardProvider from "./store/BoardProvider";
 import ToolboxProvider from "./store/ToolboxProvider";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import LandingPage from "./components/LandingPage";
 import { useParams } from "react-router-dom";
 
-
-function HomePage() {
+function WhiteboardApp() {
   const { id } = useParams(); // Get the dynamic id
   return (
     <ToolboxProvider>
@@ -30,10 +30,12 @@ function App() {
     <BoardProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<HomePage />} />
-          <Route path="/:id" element={<HomePage />} /> 
+          <Route path="/whiteboard" element={<WhiteboardApp />} />
+          <Route path="/whiteboard/:id" element={<WhiteboardApp />} />
+          <Route path="/demo" element={<WhiteboardApp />} />
         </Routes>
       </Router>
     </BoardProvider>
