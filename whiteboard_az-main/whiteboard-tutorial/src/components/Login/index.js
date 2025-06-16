@@ -7,12 +7,14 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { setUserLoginStatus } = useContext(boardContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(''); // Clear previous errors
     
     try {
       const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/login', {
@@ -29,11 +31,18 @@ const Login = () => {
         setUserLoginStatus(true);
         navigate('/whiteboard');
       } else {
-        alert(data.message || 'Login failed');
+        // Handle specific error messages
+        if (response.status === 401) {
+          setError('Incorrect password. Please try again.');
+        } else if (response.status === 404) {
+          setError('No account found with this email address.');
+        } else {
+          setError(data.message || 'Login failed. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('An error occurred during login');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +64,12 @@ const Login = () => {
         </div>
         
         <form onSubmit={handleSubmit} className={styles.loginForm}>
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+          
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>
             <input

@@ -69,7 +69,7 @@
   margin: 0;
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 300px);
+  max-height: calc(100vh - 400px);
 }
 
 .canvas-item {
@@ -132,6 +132,14 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
+  border: 1px solid #E5E7EB;
+}
+
+.share-title {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
 }
 
 .share-container input {
@@ -143,10 +151,16 @@
   font-size: 14px;
   margin-bottom: 12px;
   transition: border-color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .share-container input:focus {
   border-color: #3B82F6;
+}
+
+.share-container input:disabled {
+  background-color: #F9FAFB;
+  cursor: not-allowed;
 }
 
 .share-button {
@@ -159,9 +173,10 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  font-size: 14px;
 }
 
-.share-button:hover {
+.share-button:hover:not(:disabled) {
   background-color: #2563EB;
   transform: translateY(-1px);
 }
@@ -179,6 +194,7 @@
   text-align: center;
   border-radius: 6px;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .error-message {

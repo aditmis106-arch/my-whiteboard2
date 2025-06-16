@@ -13,6 +13,7 @@ const Sidebar = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSharing, setIsSharing] = useState(false);
 
   const { id } = useParams(); 
 
@@ -97,32 +98,60 @@ const Sidebar = () => {
 
   const handleShare = async () => {
     if (!email.trim()) {
-      setError("Please enter an email.");
+      setError("Please enter an email address.");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!canvasId) {
+      setError("No canvas selected to share.");
       return;
     }
 
     try {
+      setIsSharing(true);
       setError(""); // Clear previous errors
       setSuccess(""); // Clear previous success message
 
       const response = await axios.put(
         `https://api-whiteboard-az.onrender.com/api/canvas/share/${canvasId}`,
-        { email },
+        { email: email.trim() },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      setSuccess(response.data.message);
+      setSuccess(`Canvas shared successfully with ${email.trim()}!`);
       setEmail(""); // Clear email input
+      
+      // Clear success message after 5 seconds
       setTimeout(() => {
         setSuccess("");
       }, 5000);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to share canvas.");
+      console.error('Share error:', err);
+      if (err.response?.status === 404) {
+        setError("User with this email not found. They need to register first.");
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.error || "Invalid request. Please try again.");
+      } else if (err.response?.status === 403) {
+        setError("You don't have permission to share this canvas.");
+      } else {
+        setError(err.response?.data?.error || "Failed to share canvas. Please try again.");
+      }
+      
+      // Clear error message after 5 seconds
       setTimeout(() => {
         setError("");
       }, 5000);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -165,21 +194,25 @@ const Sidebar = () => {
         ))}
       </ul>
       
-      {isUserLoggedIn && (
+      {isUserLoggedIn && canvasId && (
         <div className="share-container">
+          <h4 className="share-title">Share Canvas</h4>
           <input
             type="email"
-            placeholder="Enter email to share"
+            placeholder="Enter email to share with"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isSharing}
           />
-          <button className="share-button" onClick={handleShare}>
-            Share
+          <button 
+            className="share-button" 
+            onClick={handleShare} 
+            disabled={isSharing || !email.trim()}
+          >
+            {isSharing ? 'Sharing...' : 'Share Canvas'}
           </button>
           {error && <p className="error-message">{error}</p>}
-          }
           {success && <p className="success-message">{success}</p>}
-          }
         </div>
       )}
       
