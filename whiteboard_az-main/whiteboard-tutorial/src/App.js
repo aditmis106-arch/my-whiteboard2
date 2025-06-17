@@ -9,6 +9,7 @@ import ToolboxProvider from "./store/ToolboxProvider";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import LandingPage from "./components/LandingPage";
+import About from "./components/About";
 import { useParams } from "react-router-dom";
 
 function WhiteboardApp() {
@@ -31,6 +32,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/whiteboard" element={<WhiteboardApp />} />

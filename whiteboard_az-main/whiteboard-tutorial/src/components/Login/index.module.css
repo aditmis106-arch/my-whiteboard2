@@ -127,6 +127,36 @@
   transform: none;
 }
 
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+.divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #6B7280;
+  font-size: 0.9rem;
+}
+
+.googleButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+}
+
 .footer {
   text-align: center;
   margin-top: 2rem;

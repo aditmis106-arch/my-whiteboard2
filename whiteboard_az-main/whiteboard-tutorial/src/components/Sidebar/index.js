@@ -127,13 +127,15 @@ const Sidebar = () => {
         }
       );
 
-      setSuccess(`Canvas shared successfully with ${email.trim()}!`);
-      setEmail(""); // Clear email input
-      
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccess("");
-      }, 5000);
+      if (response.status === 200) {
+        setSuccess(`Canvas shared successfully with ${email.trim()}!`);
+        setEmail(""); // Clear email input
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setSuccess("");
+        }, 5000);
+      }
     } catch (err) {
       console.error('Share error:', err);
       if (err.response?.status === 404) {
@@ -212,9 +214,7 @@ const Sidebar = () => {
             {isSharing ? 'Sharing...' : 'Share Canvas'}
           </button>
           {error && <p className="error-message">{error}</p>}
-          }
           {success && <p className="success-message">{success}</p>}
-          }
         </div>
       )}
       

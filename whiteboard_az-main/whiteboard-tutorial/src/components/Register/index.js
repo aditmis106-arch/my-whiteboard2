@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './index.module.css';
 
@@ -7,22 +7,75 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com",
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("google-signup-button"),
+        {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+          text: "signup_with",
+        }
+      );
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          credential: response.credential 
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        alert('Registration successful! Please login to continue.');
+        navigate('/login');
+      } else {
+        setError(data.message || 'Google registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Google registration error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      alert("Passwords don't match");
+      setError("Passwords don't match");
       return;
     }
     
     if (password.length < 6) {
-      alert("Password must be at least 6 characters long");
+      setError("Password must be at least 6 characters long");
       return;
     }
     
     setIsLoading(true);
+    setError('');
     
     try {
       const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/register', {
@@ -38,11 +91,11 @@ const Register = () => {
         alert('Registration successful! Please login to continue.');
         navigate('/login');
       } else {
-        alert(data.message || 'Registration failed');
+        setError(data.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('An error occurred during registration');
+      setError('An error occurred during registration');
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +117,12 @@ const Register = () => {
         </div>
         
         <form onSubmit={handleSubmit} className={styles.registerForm}>
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+          
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>
             <input
@@ -111,6 +170,12 @@ const Register = () => {
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
+
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
+
+          <div id="google-signup-button" className={styles.googleButton}></div>
         </form>
         
         <div className={styles.footer}>

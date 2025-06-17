@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './index.module.css';
 import boardContext from '../../store/board-context';
@@ -11,10 +11,62 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUserLoginStatus } = useContext(boardContext);
 
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com",
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("google-signin-button"),
+        {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+          text: "signin_with",
+        }
+      );
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          credential: response.credential 
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        localStorage.setItem('whiteboard_user_token', data.token);
+        setUserLoginStatus(true);
+        navigate('/whiteboard');
+      } else {
+        setError(data.message || 'Google login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(''); // Clear previous errors
+    setError('');
     
     try {
       const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/login', {
@@ -31,7 +83,6 @@ const Login = () => {
         setUserLoginStatus(true);
         navigate('/whiteboard');
       } else {
-        // Handle specific error messages
         if (response.status === 401) {
           setError('Incorrect password. Please try again.');
         } else if (response.status === 404) {
@@ -103,6 +154,12 @@ const Login = () => {
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
+
+          <div id="google-signin-button" className={styles.googleButton}></div>
         </form>
         
         <div className={styles.footer}>

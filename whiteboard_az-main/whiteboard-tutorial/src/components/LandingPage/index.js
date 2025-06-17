@@ -23,6 +23,10 @@ const LandingPage = () => {
     navigate('/register');
   };
 
+  const handleAbout = () => {
+    navigate('/about');
+  };
+
   return (
     <div className={styles.landingContainer}>
       {/* Navigation Header */}
@@ -32,6 +36,9 @@ const LandingPage = () => {
             <h2>WhiteBoard</h2>
           </div>
           <div className={styles.navButtons}>
+            <button className={styles.aboutBtn} onClick={handleAbout}>
+              About
+            </button>
             {!isUserLoggedIn ? (
               <>
                 <button className={styles.loginBtn} onClick={handleLogin}>
@@ -211,7 +218,7 @@ const LandingPage = () => {
             <div className={styles.footerSection}>
               <h4>Company</h4>
               <ul>
-                <li><a href="#about">About</a></li>
+                <li><button onClick={handleAbout} className={styles.footerLink}>About</button></li>
                 <li><a href="#privacy">Privacy</a></li>
                 <li><a href="#terms">Terms</a></li>
               </ul>
