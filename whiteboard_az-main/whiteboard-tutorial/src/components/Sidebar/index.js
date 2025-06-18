@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 
 const Sidebar = () => {
   const [canvases, setCanvases] = useState([]);
+  const [sharedCanvases, setSharedCanvases] = useState([]);
   const token = localStorage.getItem('whiteboard_user_token');
   const { canvasId, setCanvasId, setElements, setHistory, isUserLoggedIn, setUserLoginStatus } = useContext(boardContext);
   const navigate = useNavigate();
@@ -14,12 +15,14 @@ const Sidebar = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSharing, setIsSharing] = useState(false);
+  const [activeTab, setActiveTab] = useState('my-canvases');
 
   const { id } = useParams(); 
 
   useEffect(() => {
     if (isUserLoggedIn) {
       fetchCanvases();
+      fetchSharedCanvases();
     }
   }, [isUserLoggedIn]);
 
@@ -29,7 +32,7 @@ const Sidebar = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCanvases(response.data);
-      console.log(response.data)
+      console.log('My canvases:', response.data);
       
       if (response.data.length === 0) {
         const newCanvas = await handleCreateCanvas();
@@ -48,15 +51,28 @@ const Sidebar = () => {
     }
   };
 
+  const fetchSharedCanvases = async () => {
+    try {
+      const response = await axios.get('https://api-whiteboard-az.onrender.com/api/canvas/shared', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSharedCanvases(response.data);
+      console.log('Shared canvases:', response.data);
+    } catch (error) {
+      console.error('Error fetching shared canvases:', error);
+    }
+  };
+
   const handleCreateCanvas = async () => {
     try {
       const response = await axios.post('https://api-whiteboard-az.onrender.com/api/canvas/create', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(response.data)  
+      console.log(response.data);
       fetchCanvases();
       setCanvasId(response.data.canvasId);
       handleCanvasClick(response.data.canvasId);
+      return response.data;
     } catch (error) {
       console.error('Error creating canvas:', error);
       return null;
@@ -88,6 +104,7 @@ const Sidebar = () => {
   const handleLogout = () => {
     localStorage.removeItem('whiteboard_user_token');
     setCanvases([]);
+    setSharedCanvases([]);
     setUserLoginStatus(false);
     navigate('/');
   };
@@ -116,12 +133,15 @@ const Sidebar = () => {
 
     try {
       setIsSharing(true);
-      setError(""); // Clear previous errors
-      setSuccess(""); // Clear previous success message
+      setError("");
+      setSuccess("");
 
-      const response = await axios.put(
-        `https://api-whiteboard-az.onrender.com/api/canvas/share/${canvasId}`,
-        { email: email.trim() },
+      const response = await axios.post(
+        `https://api-whiteboard-az.onrender.com/api/canvas/share`,
+        { 
+          canvasId: canvasId,
+          email: email.trim() 
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -129,9 +149,8 @@ const Sidebar = () => {
 
       if (response.status === 200) {
         setSuccess(`Canvas shared successfully with ${email.trim()}!`);
-        setEmail(""); // Clear email input
+        setEmail("");
         
-        // Clear success message after 5 seconds
         setTimeout(() => {
           setSuccess("");
         }, 5000);
@@ -141,14 +160,13 @@ const Sidebar = () => {
       if (err.response?.status === 404) {
         setError("User with this email not found. They need to register first.");
       } else if (err.response?.status === 400) {
-        setError(err.response?.data?.error || "Invalid request. Please try again.");
+        setError(err.response?.data?.message || "Invalid request. Please try again.");
       } else if (err.response?.status === 403) {
         setError("You don't have permission to share this canvas.");
       } else {
-        setError(err.response?.data?.error || "Failed to share canvas. Please try again.");
+        setError(err.response?.data?.message || "Failed to share canvas. Please try again.");
       }
       
-      // Clear error message after 5 seconds
       setTimeout(() => {
         setError("");
       }, 5000);
@@ -176,25 +194,68 @@ const Sidebar = () => {
       >
         + Create New Canvas
       </button>
+
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-button ${activeTab === 'my-canvases' ? 'active' : ''}`}
+          onClick={() => setActiveTab('my-canvases')}
+        >
+          My Canvases ({canvases.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'shared' ? 'active' : ''}`}
+          onClick={() => setActiveTab('shared')}
+        >
+          Shared ({sharedCanvases.length})
+        </button>
+      </div>
       
-      <ul className="canvas-list">
-        {canvases.map(canvas => (
-          <li 
-            key={canvas._id} 
-            className={`canvas-item ${canvas._id === canvasId ? 'selected' : ''}`}
-          >
-            <span 
-              className="canvas-name" 
-              onClick={() => handleCanvasClick(canvas._id)}
+      {/* Canvas Lists */}
+      {activeTab === 'my-canvases' && (
+        <ul className="canvas-list">
+          {canvases.map(canvas => (
+            <li 
+              key={canvas._id} 
+              className={`canvas-item ${canvas._id === canvasId ? 'selected' : ''}`}
             >
-              Canvas {canvas._id.slice(-6)}
-            </span>
-            <button className="delete-button" onClick={() => handleDeleteCanvas(canvas._id)}>
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
+              <span 
+                className="canvas-name" 
+                onClick={() => handleCanvasClick(canvas._id)}
+              >
+                Canvas {canvas._id.slice(-6)}
+              </span>
+              <button className="delete-button" onClick={() => handleDeleteCanvas(canvas._id)}>
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {activeTab === 'shared' && (
+        <ul className="canvas-list">
+          {sharedCanvases.map(canvas => (
+            <li 
+              key={canvas._id} 
+              className={`canvas-item ${canvas._id === canvasId ? 'selected' : ''}`}
+            >
+              <span 
+                className="canvas-name" 
+                onClick={() => handleCanvasClick(canvas._id)}
+              >
+                Canvas {canvas._id.slice(-6)}
+                <small className="shared-by">by {canvas.owner?.email || 'Unknown'}</small>
+              </span>
+            </li>
+          ))}
+          {sharedCanvases.length === 0 && (
+            <li className="no-canvases">
+              No shared canvases yet
+            </li>
+          )}
+        </ul>
+      )}
       
       {isUserLoggedIn && canvasId && (
         <div className="share-container">
@@ -214,9 +275,7 @@ const Sidebar = () => {
             {isSharing ? 'Sharing...' : 'Share Canvas'}
           </button>
           {error && <p className="error-message">{error}</p>}
-          }
           {success && <p className="success-message">{success}</p>}
-          }
         </div>
       )}
       

@@ -18,15 +18,20 @@ const Register = () => {
         callback: handleGoogleResponse,
       });
 
-      window.google.accounts.id.renderButton(
-        document.getElementById("google-signup-button"),
-        {
-          theme: "outline",
-          size: "large",
-          width: "100%",
-          text: "signup_with",
-        }
-      );
+      // Render the Google Sign-In button
+      const googleButtonElement = document.getElementById("google-signup-button");
+      if (googleButtonElement) {
+        window.google.accounts.id.renderButton(
+          googleButtonElement,
+          {
+            theme: "outline",
+            size: "large",
+            width: "100%",
+            text: "signup_with",
+            shape: "rectangular",
+          }
+        );
+      }
     }
   }, []);
 
@@ -35,13 +40,14 @@ const Register = () => {
     setError('');
     
     try {
-      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-register', {
+      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          credential: response.credential 
+          credential: response.credential,
+          action: 'register'
         }),
       });
       
@@ -122,6 +128,12 @@ const Register = () => {
               {error}
             </div>
           )}
+
+          <div id="google-signup-button" className={styles.googleButton}></div>
+
+          <div className={styles.divider}>
+            <span>or continue with email</span>
+          </div>
           
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>
@@ -170,12 +182,6 @@ const Register = () => {
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
-
-          <div className={styles.divider}>
-            <span>or</span>
-          </div>
-
-          <div id="google-signup-button" className={styles.googleButton}></div>
         </form>
         
         <div className={styles.footer}>

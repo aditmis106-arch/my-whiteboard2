@@ -10,6 +10,8 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import LandingPage from "./components/LandingPage";
 import About from "./components/About";
+import Contact from "./components/Contact";
+import Help from "./components/Help";
 import { useParams } from "react-router-dom";
 
 function WhiteboardApp() {
@@ -33,6 +35,8 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/help" element={<Help />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/whiteboard" element={<WhiteboardApp />} />

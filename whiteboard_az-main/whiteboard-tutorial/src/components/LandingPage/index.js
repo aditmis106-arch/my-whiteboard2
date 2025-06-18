@@ -27,6 +27,14 @@ const LandingPage = () => {
     navigate('/about');
   };
 
+  const handleContact = () => {
+    navigate('/contact');
+  };
+
+  const handleHelp = () => {
+    navigate('/help');
+  };
+
   return (
     <div className={styles.landingContainer}>
       {/* Navigation Header */}
@@ -38,6 +46,12 @@ const LandingPage = () => {
           <div className={styles.navButtons}>
             <button className={styles.aboutBtn} onClick={handleAbout}>
               About
+            </button>
+            <button className={styles.aboutBtn} onClick={handleHelp}>
+              Help
+            </button>
+            <button className={styles.aboutBtn} onClick={handleContact}>
+              Contact
             </button>
             {!isUserLoggedIn ? (
               <>
@@ -210,8 +224,8 @@ const LandingPage = () => {
             <div className={styles.footerSection}>
               <h4>Support</h4>
               <ul>
-                <li><a href="#help">Help Center</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li><button onClick={handleHelp} className={styles.footerLink}>Help Center</button></li>
+                <li><button onClick={handleContact} className={styles.footerLink}>Contact</button></li>
                 <li><a href="#docs">Documentation</a></li>
               </ul>
             </div>

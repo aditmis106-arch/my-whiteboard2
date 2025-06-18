@@ -19,15 +19,20 @@ const Login = () => {
         callback: handleGoogleResponse,
       });
 
-      window.google.accounts.id.renderButton(
-        document.getElementById("google-signin-button"),
-        {
-          theme: "outline",
-          size: "large",
-          width: "100%",
-          text: "signin_with",
-        }
-      );
+      // Render the Google Sign-In button
+      const googleButtonElement = document.getElementById("google-signin-button");
+      if (googleButtonElement) {
+        window.google.accounts.id.renderButton(
+          googleButtonElement,
+          {
+            theme: "outline",
+            size: "large",
+            width: "100%",
+            text: "signin_with",
+            shape: "rectangular",
+          }
+        );
+      }
     }
   }, []);
 
@@ -36,13 +41,14 @@ const Login = () => {
     setError('');
     
     try {
-      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-login', {
+      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          credential: response.credential 
+          credential: response.credential,
+          action: 'login'
         }),
       });
       
@@ -120,6 +126,12 @@ const Login = () => {
               {error}
             </div>
           )}
+
+          <div id="google-signin-button" className={styles.googleButton}></div>
+
+          <div className={styles.divider}>
+            <span>or continue with email</span>
+          </div>
           
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>
@@ -154,12 +166,6 @@ const Login = () => {
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
-
-          <div className={styles.divider}>
-            <span>or</span>
-          </div>
-
-          <div id="google-signin-button" className={styles.googleButton}></div>
         </form>
         
         <div className={styles.footer}>
