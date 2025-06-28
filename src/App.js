@@ -12,6 +12,7 @@ import LandingPage from "./components/LandingPage";
 import About from "./components/About";
 import Contact from "./components/Contact";
 import Help from "./components/Help";
+import EmailVerification from "./components/EmailVerification";
 import { useParams } from "react-router-dom";
 
 function WhiteboardApp() {
@@ -39,6 +40,7 @@ function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<EmailVerification />} />
           <Route path="/whiteboard" element={<WhiteboardApp />} />
           <Route path="/whiteboard/:id" element={<WhiteboardApp />} />
           <Route path="/demo" element={<WhiteboardApp />} />
