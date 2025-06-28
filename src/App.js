@@ -13,6 +13,8 @@ import About from "./components/About";
 import Contact from "./components/Contact";
 import Help from "./components/Help";
 import EmailVerification from "./components/EmailVerification";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import { useParams } from "react-router-dom";
 
 function WhiteboardApp() {
@@ -41,6 +43,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailVerification />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/whiteboard" element={<WhiteboardApp />} />
           <Route path="/whiteboard/:id" element={<WhiteboardApp />} />
           <Route path="/demo" element={<WhiteboardApp />} />
