@@ -125,9 +125,9 @@
   cursor: not-allowed;
 }
 
-.forgotPassword {
+.forgotPasswordContainer {
+  margin-top: 0.5rem;
   text-align: right;
-  margin-top: -0.5rem;
 }
 
 .forgotPasswordLink {

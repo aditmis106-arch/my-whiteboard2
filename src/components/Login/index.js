@@ -137,12 +137,11 @@ const Login = () => {
               required
               disabled={isLoading}
             />
-          </div>
-
-          <div className={styles.forgotPassword}>
-            <Link to="/forgot-password" className={styles.forgotPasswordLink}>
-              Forgot your password?
-            </Link>
+            <div className={styles.forgotPasswordContainer}>
+              <Link to="/forgot-password" className={styles.forgotPasswordLink}>
+                Forgot your password?
+              </Link>
+            </div>
           </div>
           
           <button 
