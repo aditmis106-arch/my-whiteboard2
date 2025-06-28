@@ -37,35 +37,44 @@ function Board({ id }) {
   const token = localStorage.getItem("whiteboard_user_token");
 
   const [isAuthorized, setIsAuthorized] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
   useEffect(() => {
     if (id) {
-      // Join the canvas room (no need for userId)
+      // Join the canvas room
       socket.emit("joinCanvas", { canvasId: id });
 
       // Listen for updates from other users
-      socket.on("receiveDrawingUpdate", (updatedElements) => {
+      const handleReceiveDrawingUpdate = (updatedElements) => {
+        console.log("Received drawing update:", updatedElements);
         setElements(updatedElements);
-      });
+        setLastUpdateTime(Date.now());
+      };
 
       // Load initial canvas data
-      socket.on("loadCanvas", (initialElements) => {
+      const handleLoadCanvas = (initialElements) => {
+        console.log("Loading initial canvas:", initialElements);
         setElements(initialElements);
-      });
+        setHistory(initialElements);
+      };
 
-      socket.on("unauthorized", (data) => {
+      const handleUnauthorized = (data) => {
         console.log(data.message);
         alert("Access Denied: You cannot edit this canvas.");
         setIsAuthorized(false);
-      });
+      };
+
+      socket.on("receiveDrawingUpdate", handleReceiveDrawingUpdate);
+      socket.on("loadCanvas", handleLoadCanvas);
+      socket.on("unauthorized", handleUnauthorized);
 
       return () => {
-        socket.off("receiveDrawingUpdate");
-        socket.off("loadCanvas");
-        socket.off("unauthorized");
+        socket.off("receiveDrawingUpdate", handleReceiveDrawingUpdate);
+        socket.off("loadCanvas", handleLoadCanvas);
+        socket.off("unauthorized", handleUnauthorized);
       };
     }
-  }, [id]);
+  }, [id, setElements, setHistory]);
 
   useEffect(() => {
     const fetchCanvasData = async () => {
@@ -79,13 +88,16 @@ function Board({ id }) {
           setHistory(response.data.elements); // Set the fetched elements
         } catch (error) {
           console.error("Error loading canvas:", error);
-        } finally {
+          if (error.response?.status === 403) {
+            setIsAuthorized(false);
+            alert("Access Denied: You don't have permission to view this canvas.");
+          }
         }
       }
     };
 
     fetchCanvasData();
-  }, [id, token]);
+  }, [id, token, setCanvasId, setElements, setHistory]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -147,7 +159,6 @@ function Board({ id }) {
     };
   }, [elements]);
 
-
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (toolActionType === TOOL_ACTION_TYPES.WRITING) {
@@ -157,8 +168,6 @@ function Board({ id }) {
     }
   }, [toolActionType]);
 
-  // console.log("Elements ",elements);
-
   const handleMouseDown = (event) => {
     if (!isAuthorized) return;
     boardMouseDownHandler(event, toolboxState);
@@ -167,13 +176,31 @@ function Board({ id }) {
   const handleMouseMove = (event) => {
     if (!isAuthorized) return;
     boardMouseMoveHandler(event);
-    socket.emit("drawingUpdate", { canvasId: id, elements });
+    
+    // Only emit updates if this is a drawing action and enough time has passed
+    const now = Date.now();
+    if (now - lastUpdateTime > 50) { // Throttle updates to every 50ms
+      socket.emit("drawingUpdate", { canvasId: id, elements });
+      setLastUpdateTime(now);
+    }
   };
 
   const handleMouseUp = () => {
     if (!isAuthorized) return;
     boardMouseUpHandler();
+    
+    // Always emit on mouse up to ensure final state is shared
     socket.emit("drawingUpdate", { canvasId: id, elements });
+  };
+
+  const handleTextBlur = (text) => {
+    if (!isAuthorized) return;
+    textAreaBlurHandler(text);
+    
+    // Emit update after text is added
+    setTimeout(() => {
+      socket.emit("drawingUpdate", { canvasId: id, elements });
+    }, 100);
   };
 
   return (
@@ -189,7 +216,7 @@ function Board({ id }) {
             fontSize: `${elements[elements.length - 1]?.size}px`,
             color: elements[elements.length - 1]?.stroke,
           }}
-          onBlur={(event) => textAreaBlurHandler(event.target.value)}
+          onBlur={(event) => handleTextBlur(event.target.value)}
         />
       )}
       <canvas

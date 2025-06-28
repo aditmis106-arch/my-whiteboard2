@@ -141,7 +141,7 @@
   flex-direction: column;
 }
 
-.shared-by {
+.shared-by, .canvas-date {
   font-size: 0.75rem;
   color: #6B7280;
   font-weight: 400;

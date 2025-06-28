@@ -80,6 +80,10 @@ const Sidebar = () => {
   };
 
   const handleDeleteCanvas = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this canvas? This action cannot be undone.')) {
+      return;
+    }
+    
     try {
       await axios.delete(`https://api-whiteboard-az.onrender.com/api/canvas/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -91,9 +95,17 @@ const Sidebar = () => {
           setCanvasId(remainingCanvas._id);
           handleCanvasClick(remainingCanvas._id);
         }
+      } else {
+        // If this was the last canvas, create a new one
+        const newCanvas = await handleCreateCanvas();
+        if (newCanvas) {
+          setCanvasId(newCanvas._id);
+          handleCanvasClick(newCanvas._id);
+        }
       }
     } catch (error) {
       console.error('Error deleting canvas:', error);
+      alert('Failed to delete canvas. Please try again.');
     }
   };
 
@@ -126,7 +138,8 @@ const Sidebar = () => {
       return;
     }
 
-    if (!canvasId) {
+    const currentCanvasId = id || canvasId;
+    if (!currentCanvasId) {
       setError("No canvas selected to share.");
       return;
     }
@@ -139,7 +152,7 @@ const Sidebar = () => {
       const response = await axios.post(
         `https://api-whiteboard-az.onrender.com/api/canvas/share`,
         { 
-          canvasId: canvasId,
+          canvasId: currentCanvasId,
           email: email.trim() 
         },
         {
@@ -150,6 +163,9 @@ const Sidebar = () => {
       if (response.status === 200) {
         setSuccess(`Canvas shared successfully with ${email.trim()}!`);
         setEmail("");
+        
+        // Refresh shared canvases list
+        fetchSharedCanvases();
         
         setTimeout(() => {
           setSuccess("");
@@ -178,6 +194,8 @@ const Sidebar = () => {
   const handleBackToHome = () => {
     navigate('/');
   };
+
+  const currentCanvasId = id || canvasId;
 
   return (
     <div className="sidebar">
@@ -217,15 +235,25 @@ const Sidebar = () => {
           {canvases.map(canvas => (
             <li 
               key={canvas._id} 
-              className={`canvas-item ${canvas._id === canvasId ? 'selected' : ''}`}
+              className={`canvas-item ${canvas._id === currentCanvasId ? 'selected' : ''}`}
             >
               <span 
                 className="canvas-name" 
                 onClick={() => handleCanvasClick(canvas._id)}
               >
                 Canvas {canvas._id.slice(-6)}
+                <small className="canvas-date">
+                  {new Date(canvas.updatedAt || canvas.createdAt).toLocaleDateString()}
+                </small>
               </span>
-              <button className="delete-button" onClick={() => handleDeleteCanvas(canvas._id)}>
+              <button 
+                className="delete-button" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteCanvas(canvas._id);
+                }}
+                title="Delete canvas"
+              >
                 ×
               </button>
             </li>
@@ -238,7 +266,7 @@ const Sidebar = () => {
           {sharedCanvases.map(canvas => (
             <li 
               key={canvas._id} 
-              className={`canvas-item ${canvas._id === canvasId ? 'selected' : ''}`}
+              className={`canvas-item ${canvas._id === currentCanvasId ? 'selected' : ''}`}
             >
               <span 
                 className="canvas-name" 
@@ -257,7 +285,7 @@ const Sidebar = () => {
         </ul>
       )}
       
-      {isUserLoggedIn && canvasId && (
+      {isUserLoggedIn && currentCanvasId && (
         <div className="share-container">
           <h4 className="share-title">Share Canvas</h4>
           <input
@@ -266,6 +294,11 @@ const Sidebar = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSharing}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleShare();
+              }
+            }}
           />
           <button 
             className="share-button" 
@@ -275,9 +308,7 @@ const Sidebar = () => {
             {isSharing ? 'Sharing...' : 'Share Canvas'}
           </button>
           {error && <p className="error-message">{error}</p>}
-          }
           {success && <p className="success-message">{success}</p>}
-          }
         </div>
       )}
       
