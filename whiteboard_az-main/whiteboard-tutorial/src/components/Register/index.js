@@ -14,8 +14,10 @@ const Register = () => {
     // Initialize Google Sign-In
     if (window.google) {
       window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com",
+        client_id: "1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com", // Replace with your actual Google Client ID
         callback: handleGoogleResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
       });
 
       // Render the Google Sign-In button
@@ -29,6 +31,7 @@ const Register = () => {
             width: "100%",
             text: "signup_with",
             shape: "rectangular",
+            logo_alignment: "left",
           }
         );
       }
@@ -57,7 +60,11 @@ const Register = () => {
         alert('Registration successful! Please login to continue.');
         navigate('/login');
       } else {
-        setError(data.message || 'Google registration failed. Please try again.');
+        if (res.status === 409) {
+          setError('An account with this Google email already exists. Please login instead.');
+        } else {
+          setError(data.message || 'Google registration failed. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Google registration error:', error);
@@ -97,11 +104,15 @@ const Register = () => {
         alert('Registration successful! Please login to continue.');
         navigate('/login');
       } else {
-        setError(data.message || 'Registration failed');
+        if (response.status === 409) {
+          setError('An account with this email already exists. Please login instead.');
+        } else {
+          setError(data.message || 'Registration failed. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setError('An error occurred during registration');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

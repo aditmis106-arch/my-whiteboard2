@@ -15,8 +15,10 @@ const Login = () => {
     // Initialize Google Sign-In
     if (window.google) {
       window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com",
+        client_id: "1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com", // Replace with your actual Google Client ID
         callback: handleGoogleResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
       });
 
       // Render the Google Sign-In button
@@ -30,6 +32,7 @@ const Login = () => {
             width: "100%",
             text: "signin_with",
             shape: "rectangular",
+            logo_alignment: "left",
           }
         );
       }
@@ -59,7 +62,11 @@ const Login = () => {
         setUserLoginStatus(true);
         navigate('/whiteboard');
       } else {
-        setError(data.message || 'Google login failed. Please try again.');
+        if (res.status === 404) {
+          setError("No account found with this Google account. Please register first.");
+        } else {
+          setError(data.message || 'Google login failed. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Google login error:', error);
