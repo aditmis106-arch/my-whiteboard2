@@ -125,9 +125,10 @@
   cursor: not-allowed;
 }
 
+/* Forgot Password Container - Standalone for better visibility */
 .forgotPasswordContainer {
-  margin-top: 0.5rem;
-  text-align: right;
+  text-align: center;
+  margin: -0.5rem 0 0.5rem 0;
 }
 
 .forgotPasswordLink {
@@ -136,11 +137,16 @@
   font-size: 0.9rem;
   font-weight: 500;
   transition: color 0.3s ease;
+  display: inline-block;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: rgba(79, 70, 229, 0.05);
 }
 
 .forgotPasswordLink:hover {
   color: #3730A3;
   text-decoration: underline;
+  background: rgba(79, 70, 229, 0.1);
 }
 
 .submitButton {
