@@ -227,9 +227,10 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  last-child: {
-    margin-bottom: 0;
-  }
+}
+
+.timelineItem:last-child {
+  margin-bottom: 0;
 }
 
 .timelineYear {
