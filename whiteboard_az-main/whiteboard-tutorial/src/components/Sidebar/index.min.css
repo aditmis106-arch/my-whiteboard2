@@ -63,7 +63,6 @@
   transform: none;
 }
 
-/* Tab Navigation */
 .tab-navigation {
   display: flex;
   margin-bottom: 16px;
@@ -240,6 +239,16 @@
   transform: none;
 }
 
+.debug-info {
+  margin-top: 8px;
+  padding: 6px;
+  background: #F3F4F6;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #6B7280;
+  word-break: break-all;
+}
+
 .error-message, .success-message {
   font-size: 12px;
   margin-top: 8px;
@@ -293,7 +302,6 @@
   transform: translateY(-1px);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .sidebar {
     width: 100%;

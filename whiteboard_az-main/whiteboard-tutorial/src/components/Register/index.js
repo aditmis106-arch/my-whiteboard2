@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './index.module.css';
 
@@ -8,71 +8,8 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Initialize Google Sign-In
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: "1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com", // Replace with your actual Google Client ID
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Render the Google Sign-In button
-      const googleButtonElement = document.getElementById("google-signup-button");
-      if (googleButtonElement) {
-        window.google.accounts.id.renderButton(
-          googleButtonElement,
-          {
-            theme: "outline",
-            size: "large",
-            width: "100%",
-            text: "signup_with",
-            shape: "rectangular",
-            logo_alignment: "left",
-          }
-        );
-      }
-    }
-  }, []);
-
-  const handleGoogleResponse = async (response) => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          credential: response.credential,
-          action: 'register'
-        }),
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        alert('Registration successful! Please login to continue.');
-        navigate('/login');
-      } else {
-        if (res.status === 409) {
-          setError('An account with this Google email already exists. Please login instead.');
-        } else {
-          setError(data.message || 'Google registration failed. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Google registration error:', error);
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,6 +26,7 @@ const Register = () => {
     
     setIsLoading(true);
     setError('');
+    setSuccess('');
     
     try {
       const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/register', {
@@ -101,8 +39,11 @@ const Register = () => {
       const data = await response.json();
       
       if (response.ok) {
-        alert('Registration successful! Please login to continue.');
-        navigate('/login');
+        setSuccess('Registration successful! Please check your email to verify your account before logging in.');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        // Don't navigate immediately, let user verify email first
       } else {
         if (response.status === 409) {
           setError('An account with this email already exists. Please login instead.');
@@ -113,6 +54,38 @@ const Register = () => {
     } catch (error) {
       console.error('Registration error:', error);
       setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('Verification email sent! Please check your inbox.');
+      } else {
+        setError(data.message || 'Failed to send verification email.');
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -137,14 +110,37 @@ const Register = () => {
           {error && (
             <div className={styles.errorMessage}>
               {error}
+              {error.includes('verify') && (
+                <button 
+                  type="button" 
+                  className={styles.resendButton}
+                  onClick={handleResendVerification}
+                  disabled={isLoading}
+                >
+                  Resend Verification Email
+                </button>
+              )}
             </div>
           )}
 
-          <div id="google-signup-button" className={styles.googleButton}></div>
-
-          <div className={styles.divider}>
-            <span>or continue with email</span>
-          </div>
+          {success && (
+            <div className={styles.successMessage}>
+              {success}
+              <div className={styles.actionButtons}>
+                <button 
+                  type="button" 
+                  className={styles.resendButton}
+                  onClick={handleResendVerification}
+                  disabled={isLoading}
+                >
+                  Resend Verification Email
+                </button>
+                <Link to="/login" className={styles.loginLink}>
+                  Go to Login
+                </Link>
+              </div>
+            </div>
+          )}
           
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>

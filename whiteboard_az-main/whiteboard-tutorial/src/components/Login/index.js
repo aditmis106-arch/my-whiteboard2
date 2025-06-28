@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './index.module.css';
 import boardContext from '../../store/board-context';
@@ -10,71 +10,6 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { setUserLoginStatus } = useContext(boardContext);
-
-  useEffect(() => {
-    // Initialize Google Sign-In
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: "1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com", // Replace with your actual Google Client ID
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Render the Google Sign-In button
-      const googleButtonElement = document.getElementById("google-signin-button");
-      if (googleButtonElement) {
-        window.google.accounts.id.renderButton(
-          googleButtonElement,
-          {
-            theme: "outline",
-            size: "large",
-            width: "100%",
-            text: "signin_with",
-            shape: "rectangular",
-            logo_alignment: "left",
-          }
-        );
-      }
-    }
-  }, []);
-
-  const handleGoogleResponse = async (response) => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      const res = await fetch('https://api-whiteboard-az.onrender.com/api/users/google-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          credential: response.credential,
-          action: 'login'
-        }),
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        localStorage.setItem('whiteboard_user_token', data.token);
-        setUserLoginStatus(true);
-        navigate('/whiteboard');
-      } else {
-        if (res.status === 404) {
-          setError("No account found with this Google account. Please register first.");
-        } else {
-          setError(data.message || 'Google login failed. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,6 +35,8 @@ const Login = () => {
           setError('Incorrect password. Please try again.');
         } else if (response.status === 404) {
           setError('No account found with this email address.');
+        } else if (response.status === 403) {
+          setError('Please verify your email before logging in. Check your inbox for the verification link.');
         } else {
           setError(data.message || 'Login failed. Please try again.');
         }
@@ -114,6 +51,38 @@ const Login = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('https://api-whiteboard-az.onrender.com/api/users/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setError('Verification email sent! Please check your inbox.');
+      } else {
+        setError(data.message || 'Failed to send verification email.');
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -131,14 +100,18 @@ const Login = () => {
           {error && (
             <div className={styles.errorMessage}>
               {error}
+              {error.includes('verify your email') && (
+                <button 
+                  type="button" 
+                  className={styles.resendButton}
+                  onClick={handleResendVerification}
+                  disabled={isLoading}
+                >
+                  Resend Verification Email
+                </button>
+              )}
             </div>
           )}
-
-          <div id="google-signin-button" className={styles.googleButton}></div>
-
-          <div className={styles.divider}>
-            <span>or continue with email</span>
-          </div>
           
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email Address</label>

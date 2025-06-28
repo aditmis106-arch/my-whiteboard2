@@ -16,6 +16,7 @@ const Sidebar = () => {
   const [success, setSuccess] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [activeTab, setActiveTab] = useState('my-canvases');
+  const [shareDebugInfo, setShareDebugInfo] = useState('');
 
   const { id } = useParams(); 
 
@@ -48,6 +49,11 @@ const Sidebar = () => {
       }
     } catch (error) {
       console.error('Error fetching canvases:', error);
+      if (error.response?.status === 401) {
+        setUserLoginStatus(false);
+        localStorage.removeItem('whiteboard_user_token');
+        navigate('/login');
+      }
     }
   };
 
@@ -60,6 +66,11 @@ const Sidebar = () => {
       console.log('Shared canvases:', response.data);
     } catch (error) {
       console.error('Error fetching shared canvases:', error);
+      if (error.response?.status === 401) {
+        setUserLoginStatus(false);
+        localStorage.removeItem('whiteboard_user_token');
+        navigate('/login');
+      }
     }
   };
 
@@ -68,13 +79,18 @@ const Sidebar = () => {
       const response = await axios.post('https://api-whiteboard-az.onrender.com/api/canvas/create', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(response.data);
+      console.log('Canvas created:', response.data);
       fetchCanvases();
       setCanvasId(response.data.canvasId);
       handleCanvasClick(response.data.canvasId);
       return response.data;
     } catch (error) {
       console.error('Error creating canvas:', error);
+      if (error.response?.status === 401) {
+        setUserLoginStatus(false);
+        localStorage.removeItem('whiteboard_user_token');
+        navigate('/login');
+      }
       return null;
     }
   };
@@ -96,7 +112,6 @@ const Sidebar = () => {
           handleCanvasClick(remainingCanvas._id);
         }
       } else {
-        // If this was the last canvas, create a new one
         const newCanvas = await handleCreateCanvas();
         if (newCanvas) {
           setCanvasId(newCanvas._id);
@@ -131,7 +146,6 @@ const Sidebar = () => {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       setError("Please enter a valid email address.");
@@ -148,6 +162,13 @@ const Sidebar = () => {
       setIsSharing(true);
       setError("");
       setSuccess("");
+      setShareDebugInfo(`Sharing canvas ${currentCanvasId} with ${email.trim()}...`);
+
+      console.log('Sharing request:', {
+        canvasId: currentCanvasId,
+        email: email.trim(),
+        token: token ? 'Present' : 'Missing'
+      });
 
       const response = await axios.post(
         `https://api-whiteboard-az.onrender.com/api/canvas/share`,
@@ -160,32 +181,46 @@ const Sidebar = () => {
         }
       );
 
+      console.log('Share response:', response.data);
+      setShareDebugInfo(`Share successful! Response: ${JSON.stringify(response.data)}`);
+
       if (response.status === 200) {
         setSuccess(`Canvas shared successfully with ${email.trim()}!`);
         setEmail("");
         
         // Refresh shared canvases list
-        fetchSharedCanvases();
+        await fetchSharedCanvases();
         
         setTimeout(() => {
           setSuccess("");
+          setShareDebugInfo("");
         }, 5000);
       }
     } catch (err) {
       console.error('Share error:', err);
+      console.error('Error response:', err.response?.data);
+      
+      setShareDebugInfo(`Share failed: ${err.response?.status} - ${err.response?.data?.message || err.message}`);
+      
       if (err.response?.status === 404) {
         setError("User with this email not found. They need to register first.");
       } else if (err.response?.status === 400) {
         setError(err.response?.data?.message || "Invalid request. Please try again.");
       } else if (err.response?.status === 403) {
         setError("You don't have permission to share this canvas.");
+      } else if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+        setUserLoginStatus(false);
+        localStorage.removeItem('whiteboard_user_token');
+        navigate('/login');
       } else {
         setError(err.response?.data?.message || "Failed to share canvas. Please try again.");
       }
       
       setTimeout(() => {
         setError("");
-      }, 5000);
+        setShareDebugInfo("");
+      }, 8000);
     } finally {
       setIsSharing(false);
     }
@@ -213,7 +248,6 @@ const Sidebar = () => {
         + Create New Canvas
       </button>
 
-      {/* Tab Navigation */}
       <div className="tab-navigation">
         <button 
           className={`tab-button ${activeTab === 'my-canvases' ? 'active' : ''}`}
@@ -229,7 +263,6 @@ const Sidebar = () => {
         </button>
       </div>
       
-      {/* Canvas Lists */}
       {activeTab === 'my-canvases' && (
         <ul className="canvas-list">
           {canvases.map(canvas => (
@@ -307,10 +340,15 @@ const Sidebar = () => {
           >
             {isSharing ? 'Sharing...' : 'Share Canvas'}
           </button>
+          
+          {shareDebugInfo && (
+            <div className="debug-info">
+              <small>{shareDebugInfo}</small>
+            </div>
+          )}
+          
           {error && <p className="error-message">{error}</p>}
-          }
           {success && <p className="success-message">{success}</p>}
-          }
         </div>
       )}
       
