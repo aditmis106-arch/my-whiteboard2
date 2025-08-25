@@ -126,13 +126,19 @@ function Board({ id }) {
     const canvas = canvasRef.current;
     if (!canvas || !elements) return;
 
+    if (!canvas || !elements) return;
+
     const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.save();
 
     const roughCanvas = rough.canvas(canvas);
 
     elements.forEach((element) => {
+      if (!element) return;
+      
+      try {
       if (!element) return;
       
       try {
@@ -144,12 +150,15 @@ function Board({ id }) {
             if (element.roughEle) {
               roughCanvas.draw(element.roughEle);
             }
+              roughCanvas.draw(element.roughEle);
+            }
             break;
           case TOOL_ITEMS.BRUSH:
             if (element.points && element.stroke) {
               context.fillStyle = element.stroke;
               const path = new Path2D(getSvgPathFromStroke(getStroke(element.points)));
               context.fill(path);
+            }
             }
             break;
           case TOOL_ITEMS.TEXT:
@@ -159,6 +168,7 @@ function Board({ id }) {
               context.fillStyle = element.stroke || "#000000";
               context.fillText(element.text, element.x1, element.y1);
             }
+            }
             break;
           default:
             console.warn("Unknown element type:", element.type);
@@ -166,11 +176,12 @@ function Board({ id }) {
       } catch (error) {
         console.error("Error rendering element:", error, element);
       }
+      } catch (error) {
+        console.error("Error rendering element:", error, element);
+      }
     });
 
     context.restore();
-  }, [elements]);
-
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (toolActionType === TOOL_ACTION_TYPES.WRITING && textarea) {
@@ -203,15 +214,17 @@ function Board({ id }) {
     if (socket && id) {
       socket.emit("drawingUpdate", { canvasId: id, elements });
     }
+    }
   };
 
   const handleTextBlur = (text) => {
     if (!isAuthorized) return;
     textAreaBlurHandler(text);
     
-    setTimeout(() => {
+      if (socket && id) {
       if (socket && id) {
         socket.emit("drawingUpdate", { canvasId: id, elements });
+      }
       }
     }, 100);
   };
@@ -220,12 +233,11 @@ function Board({ id }) {
     <>
       {toolActionType === TOOL_ACTION_TYPES.WRITING && elements.length > 0 && (
         <textarea
-          ref={textAreaRef}
           className={classes.textElementBox}
           style={{
             top: elements[elements.length - 1]?.y1 || 0,
+            top: elements[elements.length - 1]?.y1 || 0,
             left: elements[elements.length - 1]?.x1 || 0,
-            fontSize: `${elements[elements.length - 1]?.size || 32}px`,
             color: elements[elements.length - 1]?.stroke || "#000000",
           }}
           onBlur={(event) => handleTextBlur(event.target.value)}

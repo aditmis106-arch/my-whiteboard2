@@ -45,6 +45,8 @@ const boardReducer = (state, action) => {
       const index = state.elements.length - 1;
       if (index < 0) return state;
       
+      if (index < 0) return state;
+      
       const { type } = newElements[index];
       switch (type) {
         case TOOL_ITEMS.LINE:
@@ -68,15 +70,12 @@ const boardReducer = (state, action) => {
             ...newElements[index].points,
             { x: clientX, y: clientY },
           ];
-          return {
-            ...state,
-            elements: newElements,
           };
         default:
           return state;
       }
     }
-    case BOARD_ACTIONS.DRAW_UP: {
+          return state;
       const elementsCopy = [...state.elements];
       const newHistory = state.history.slice(0, state.index + 1);
       newHistory.push(elementsCopy);
@@ -107,33 +106,25 @@ const boardReducer = (state, action) => {
       const index = state.elements.length - 1;
       if (index < 0) return state;
       
+      if (index < 0) return state;
+      
       const newElements = [...state.elements];
       newElements[index].text = action.payload.text;
       const newHistory = state.history.slice(0, state.index + 1);
       newHistory.push(newElements);
       
-      return {
-        ...state,
-        toolActionType: TOOL_ACTION_TYPES.NONE,
         elements: newElements,
         history: newHistory,
         index: state.index + 1,
       };
     }
     case BOARD_ACTIONS.UNDO: {
-      if (state.index <= 0) return state;
-      
-      return {
-        ...state,
         elements: state.history[state.index - 1] || [],
-        index: state.index - 1,
+      
       };
     }
     case BOARD_ACTIONS.REDO: {
       if (state.index >= state.history.length - 1) return state;
-      
-      return {
-        ...state,
         elements: state.history[state.index + 1] || [],
         index: state.index + 1,
       };
@@ -160,6 +151,7 @@ const boardReducer = (state, action) => {
       return {
         ...state,
         history: [action.payload.elements || []],
+        index: 0,
         index: 0,
       };
 

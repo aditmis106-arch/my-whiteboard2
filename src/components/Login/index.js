@@ -145,6 +145,13 @@ const Login = () => {
               Forgot your password?
             </Link>
           </div>
+
+          {/* Forgot Password Link - Moved outside input group for better visibility */}
+          <div className={styles.forgotPasswordContainer}>
+            <Link to="/forgot-password" className={styles.forgotPasswordLink}>
+              Forgot your password?
+            </Link>
+          </div>
           
           <button 
             type="submit" 
